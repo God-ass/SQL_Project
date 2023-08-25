@@ -1,3 +1,4 @@
+--Investigate data
 SELECT *
 FROM Project..Housing
 ORDER BY 1
@@ -16,6 +17,7 @@ ALTER COLUMN Sale_Date date;
 
 
 --Change Column Name with space
+--RENAME Function isn't executable
 EXEC sp_rename 'Project..Housing.[Property Address]', 'Property_Address', 'COLUMN';
 EXEC sp_rename 'Project..Housing.[Sale Date]', 'Sale_Date', 'COLUMN';
 EXEC sp_rename 'Project..Housing.[Sale Price]', 'Sale_Price', 'COLUMN';
@@ -33,6 +35,7 @@ FROM Project..Housing
 WHERE Property_Address IS NULL
 ORDER BY ParcelID;
 
+--We are going to use b.Property_Address to replace NULL where a.ParcelID = b.ParcelID (LOOK AT THE DATA)
 SELECT a.ParcelID, a.Property_Address, a.[UniqueID ],b.[UniqueID ], b.ParcelID, b.Property_Address, ISNULL(a.Property_Address,b.Property_Address)
 FROM Project..Housing a
 JOIN Project..Housing b
@@ -52,7 +55,6 @@ WHERE a.Property_Address IS NULL
 --Split Address into 3 columns: Address, City, State
 SELECT Property_Address
 FROM Project..Housing
---Where Property_Address is null
 ORDER BY ParcelID
 
 SELECT SUBSTRING(Property_Address, 1, CHARINDEX(',', Property_Address)-1),
@@ -71,16 +73,7 @@ ADD Prop_City Nvarchar(255);
 UPDATE Project..Housing
 SET Prop_City = SUBSTRING(Property_Address, CHARINDEX(',', Property_Address)+1, LEN(Property_Address));
 
-SELECT *
-FROM Project..Housing
-
 SELECT Owner_Address
-FROM Project..Housing
-
-SELECT
-PARSENAME(REPLACE(Owner_Address, ',', '.') , 3)
-,PARSENAME(REPLACE(Owner_Address, ',', '.') , 2)
-,PARSENAME(REPLACE(Owner_Address, ',', '.') , 1)
 FROM Project..Housing
 
 ALTER TABLE Project..Housing
@@ -100,10 +93,6 @@ ADD Own_State Nvarchar(255);
 
 Update Project..Housing
 SET Own_State = PARSENAME(REPLACE(Owner_Address, ',', '.') , 1);
-
-SELECT *
-FROM Project..Housing
-
 
 -- Change Y and N to Yes and No in Sold_As_Vacant column
 SELECT DISTINCT(Sold_As_Vacant), Count(Sold_As_Vacant) AS count
@@ -137,6 +126,7 @@ DELETE
 FROM RowCTE
 WHERE row_num > 1
 
+--Check if the duplicates still exist
 WITH RowCTE AS(
 SELECT *,
 	ROW_NUMBER() OVER (
@@ -155,13 +145,11 @@ SELECT *
 FROM RowCTE
 WHERE row_num > 1
 
-SELECT *
-FROM Project..Housing
-
 
 -- Delete Unused Columns
 ALTER TABLE Project..Housing
 DROP COLUMN Owner_Address, Tax_District, Property_Address, Sale_Date;
 
+-- Here is the finalized data, ready to used!
 SELECT *
 FROM Project..Housing
